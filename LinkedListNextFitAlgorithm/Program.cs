@@ -6,7 +6,7 @@ class Segment
     public char? Type { get; set; }
     public int? StartAddress { get; set; }
     public int? Length { get; set; }
-    public string? Name { get; set; } = null;
+    public string? Name { get; set; } = "";
     public Segment? Next { get; set; } = null;
     public Segment? Previous { get; set; } = null;
 
@@ -14,21 +14,18 @@ class Segment
 
 class MemoryManager
 {
-    private static Segment head = new Segment
+    public static Segment head = new Segment
     {
-        Type = 'H',
-        StartAddress = memoryStart,
-        Length = 1000,
-        Next = null, 
-        Previous = null
+        Name = "head",
+        Next = new Segment
+        {
+            Type = 'H',
+            StartAddress = 0,
+            Length = 1000,
+            Previous = head
+        },
     };
-    private static Segment lastAllocated = new Segment
-    {
-        Next = head,
-        Previous = head
-    };
-    private static readonly int memoryStart = 0;
-    private static readonly int memoryEnd = 999;
+    private static Segment lastAllocated = head;
 
     public void CreateProcess(string name, int length)
     {
@@ -37,23 +34,24 @@ class MemoryManager
             if(lastAllocated.Next == null)
             {
                 Console.WriteLine("End of the List. Process is not created!");
-                break;
-            }
-            else if (lastAllocated.Next == head)
-            {
-                head.Next = new Segment
-                {
-                    Type = 'H',
-                    StartAddress = head.StartAddress + length,
-                    Length = head.Length - length,
-                    Next = null
-                };
-                head.Type = 'P';
-                head.Name = name;
-                head.Length = length;
                 lastAllocated = head;
                 break;
             }
+            //else if (lastAllocated.Next == head)
+            //{
+            //    head.Next = new Segment
+            //    {
+            //        Type = 'H',
+            //        StartAddress = head.StartAddress + length,
+            //        Length = head.Length - length,
+            //        Next = null
+            //    };
+            //    head.Type = 'P';
+            //    head.Name = name;
+            //    head.Length = length;
+            //    lastAllocated = head;
+            //    break;
+            //}
             else if (lastAllocated.Next.Type == 'H' && lastAllocated.Next.Length > length)
             {
                 Segment newSegment = new Segment
@@ -65,7 +63,7 @@ class MemoryManager
                         Length = lastAllocated.Next.Length - length
                     },
                     Type = 'P',
-                    StartAddress = lastAllocated.StartAddress + lastAllocated.Length,
+                    StartAddress = lastAllocated.Next.StartAddress,
                     Length = length,
                     Name = name,
                     Previous = lastAllocated,
@@ -91,16 +89,39 @@ class MemoryManager
 
     public void StopProcess(string name)
     {
-        Segment current = head;
+        Segment current = head.Next;
 
         while (current != null)
         {
             if(current.Name == name)
             {
-                //if (current.Previous == null && current.Next ==null)
-                //{
-
-                //}
+                try
+                {
+                    if (current.Next.Type == 'H')
+                    {
+                        current.Type = 'H';
+                        current.Name += current.Next.Name;
+                        current.Length += current.Next.Length;
+                        current.Next = current.Next.Next;
+                    }
+                }
+                catch
+                {
+                    current.Type = 'H';
+                }
+                try
+                {
+                    if (current.Previous.Type == 'H')
+                    {
+                        current.Previous.Name += current.Name;
+                        current.Previous.Length += current.Length;
+                        current.Previous.Next = current.Next;
+                    }
+                }
+                catch 
+                {
+                    current.Type = 'H';
+                }
                 current.Type = 'H';
             }
             current = current.Next;
@@ -109,14 +130,20 @@ class MemoryManager
 
     public void DisplayMemory()
     {
-        Segment current = head;
+        Segment current = head.Next;
 
-        Console.WriteLine("Memory Layout:");
+        Console.WriteLine("Memory Layout:[Type:process(P) or hole(H)]  [Start address]  [Length]  [Process name]");
 
-        while (current != null)
+        while (true)
         {
-            var pre = current.Previous != null ? current.Previous.Name : "null";
-            Console.Write($"[{pre}][{current.Type}][{current.StartAddress}][{current.Length}][{current.Name}]-->");
+            //var pre = current.Previous != null ? current.Previous.Name : "null";[{pre}]
+            Console.Write($"[{current.Type}][{current.StartAddress}][{current.Length}][{current.Name}]");
+            if(current.Next == null)
+            {
+                Console.WriteLine();
+                break;
+            }
+            Console.Write("<-->");
             current = current.Next;
         }
     }
@@ -127,14 +154,31 @@ class Program
     static void Main()
     {
         MemoryManager memoryManager = new MemoryManager();
-
-        // Allocate memory using Next Fit
-        memoryManager.CreateProcess("P1", 20);
-        memoryManager.CreateProcess("P2", 50);
-        memoryManager.CreateProcess("P3", 30);
-        memoryManager.StopProcess("P2");
-
-        // Display memory layout
-        memoryManager.DisplayMemory();
+        Console.WriteLine(
+                "Menu:\n" +
+                "1-Create a new process(process name, length)\n" +
+                "2-Stop process by name(process name)\n" +
+                "3-Display Memory\n" +
+                "4-Exit");
+        while (true)
+        {
+            string[] command = Console.ReadLine().Split(" ");
+            if (command[0] == "4")
+            {
+                break;
+            }
+            switch (command[0])
+            {
+                case "1":
+                    memoryManager.CreateProcess(command[1], Int32.Parse(command[2]));
+                    break;
+                case "2":
+                    memoryManager.StopProcess(command[1]);
+                    break;
+                case "3":
+                    memoryManager.DisplayMemory();
+                    break;
+            }
+        }
     }
 }
