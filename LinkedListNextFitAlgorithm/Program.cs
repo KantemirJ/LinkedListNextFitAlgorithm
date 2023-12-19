@@ -37,21 +37,6 @@ class MemoryManager
                 lastAllocated = head;
                 break;
             }
-            //else if (lastAllocated.Next == head)
-            //{
-            //    head.Next = new Segment
-            //    {
-            //        Type = 'H',
-            //        StartAddress = head.StartAddress + length,
-            //        Length = head.Length - length,
-            //        Next = null
-            //    };
-            //    head.Type = 'P';
-            //    head.Name = name;
-            //    head.Length = length;
-            //    lastAllocated = head;
-            //    break;
-            //}
             else if (lastAllocated.Next.Type == 'H' && lastAllocated.Next.Length > length)
             {
                 Segment newSegment = new Segment
@@ -136,7 +121,6 @@ class MemoryManager
 
         while (true)
         {
-            //var pre = current.Previous != null ? current.Previous.Name : "null";[{pre}]
             Console.Write($"[{current.Type}][{current.StartAddress}][{current.Length}][{current.Name}]");
             if(current.Next == null)
             {
