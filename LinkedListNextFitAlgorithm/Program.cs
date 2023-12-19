@@ -45,7 +45,8 @@ class MemoryManager
                     {
                         Type = 'H',
                         StartAddress = lastAllocated.Next.StartAddress + length,
-                        Length = lastAllocated.Next.Length - length
+                        Length = lastAllocated.Next.Length - length,
+                        Next = lastAllocated.Next.Next
                     },
                     Type = 'P',
                     StartAddress = lastAllocated.Next.StartAddress,
@@ -53,9 +54,14 @@ class MemoryManager
                     Name = name,
                     Previous = lastAllocated,
                 };
+                if (lastAllocated.Next.Next != null)
+                {
+                    lastAllocated.Next.Next.Previous = newSegment.Next;
+                }
                 newSegment.Next.Previous = newSegment;
                 lastAllocated.Next = newSegment;
                 lastAllocated = newSegment;
+
                 break; 
             }
             else if(lastAllocated.Next.Type == 'H' && lastAllocated.Next.Length == length)
@@ -88,6 +94,10 @@ class MemoryManager
                         current.Name += current.Next.Name;
                         current.Length += current.Next.Length;
                         current.Next = current.Next.Next;
+                        if (current.Next.Next != null)
+                        {
+                            current.Next.Next.Previous = current;
+                        }
                     }
                 }
                 catch
@@ -101,6 +111,10 @@ class MemoryManager
                         current.Previous.Name += current.Name;
                         current.Previous.Length += current.Length;
                         current.Previous.Next = current.Next;
+                        if (current.Next != null)
+                        {
+                            current.Next.Previous = current.Previous;
+                        }
                     }
                 }
                 catch 
